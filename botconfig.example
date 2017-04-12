@@ -1,0 +1,4 @@
+bot_name = wellbeingbot                                # The username assigned to the bot
+bot_owner = bedder                                     # The username of the bot's owner (who has access to extra commands)
+api_token = xxxx-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxx # The API token for the bot
+manifest_loc = manifest.txt                            # The name and location of the manifest file, containing the links the bot should post along with the associated tags
