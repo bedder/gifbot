@@ -74,10 +74,14 @@ class GifBot:
 	
 	def handle_command(self, text, channel):
 		tokens = text.split(" ")
-		if tokens[0] == "add":
+		if len(tokens)==0:
+			return
+		if tokens[0] == "add" and len(tokens) > 1:
 			self.store.add_gif(tokens[1], tokens[2:])
 			self.post_message(text="Adding " + tokens[1], channel=channel)
-		elif tokens[0] == "remove":
+			self.post_message(text="> " + tokens[1], channel=channel)
+			self.post_message(text="Type `save` to save this to the manifest", channel=channel)
+		elif tokens[0] == "remove" and len(tokens) == 2:
 			self.store.remove_gif(tokens[1])
 			self.post_message(text="Removing " + tokens[1], channel=channel)
 		elif tokens[0] == "status":
@@ -88,23 +92,38 @@ class GifBot:
 			else:
 				self.post_gif(channel=channel)
 		elif tokens[0] == "reload":
-			self.store = GifStore(open(self.MANIFEST).read())
+			self.store.__init__(open(self.MANIFEST).read())
+		elif tokens[0] == "save":
+			self.store.save_manifest(self.MANIFEST)
+			self.post_message(text="Manifest saved", channel=channel)
 		else:
 			self.post_message(text="Sorry, I don't understand that command. :/", channel=channel)
+			self.post_message(text="Supported commands:\n" \
+			                       "`add url token1 token2...`\n" \
+			                       "`remove url`\n" \
+			                       "`status`\n" \
+			                       "`request cat`\n" \
+			                       "`reload`\n" \
+			                       "`save`", channel=channel)
 	
 	def handle_mention(self, text, channel):
 		tokens = text.split(" ")
 		if tokens[0] != "<@" + self.BOT_ID + ">":
 			return
 		elif len(tokens) == 2 and tokens[1] == "help":
-			text="Known commands:\n`help` : Display self message\n`status` : Give a status report of the bot\n`request cat` : Request a cat GIF"
+			text="Known commands:\n" \
+			     "`help` : Display self message\n" \
+			     "`status` : Give a status report of the bot\n" \
+			     "`request cat` : Request a cat GIF"
 			self.post_message(text=text, channel=channel)
 		elif len(tokens) == 2 and tokens[1] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
 		elif len(tokens) == 3 and tokens[1] == "request":
 			self.post_gif(channel, tokens[2])
 		else:
-			self.post_message(text="Sorry, I don't understand that. :/\nHINT: try `@" + self.NAME + " help`", channel=channel)
+			self.post_message(text="Sorry, I don't understand that. :/\n" \
+			                       "HINT: try `@" + self.NAME + " help`",
+			                  channel=channel)
 	
 	def gif_trigger(self, text):
 		return "help" in text.lower()
