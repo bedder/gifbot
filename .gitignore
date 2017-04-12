@@ -1,3 +1,8 @@
+# Configuration files
 manifest.txt
 botconfig
+
+# Python-specific 
 venv
+pip*
+__pycache__
