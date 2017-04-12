@@ -32,7 +32,7 @@ class GifBot:
 				raise Exception("Unable to find user \"" + self.OWNER + "\" in the Slack channel")
 		else:
 			raise Exception("Error in Slack API call users.list")
-		#
+	
 	def run(self):
 		DELAY = 1
 		if self.client.rtm_connect():
@@ -41,12 +41,14 @@ class GifBot:
 				rtm_messages = self.client.rtm_read()
 				self.handle(rtm_messages)
 				time.sleep(DELAY)
+	
 	def handle(self, rtm_messages):
 		if rtm_messages and len(rtm_messages) > 0:
 			for message in rtm_messages:
 				print("[received " + message["type"] + "]")
 				if message["type"] == "message":
 					self.handle_message(message)
+	
 	def handle_message(self, message):
 		if "user" not in message:
 			print("Unknown message type")
@@ -63,10 +65,13 @@ class GifBot:
 		elif self.gif_trigger(message["text"]):
 			print("Handling GIF request")
 			self.post_gif(message["channel"])
+	
 	def is_mention(self, text):
 		return "@" + self.BOT_ID in text
+	
 	def post_message(self, text, channel):
 		self.client.api_call("chat.postMessage", channel=channel, text=text, as_user=True)
+	
 	def handle_command(self, text, channel):
 		tokens = text.split(" ")
 		if tokens[0] == "add":
@@ -86,6 +91,7 @@ class GifBot:
 			self.store = GifStore(open(self.MANIFEST).read())
 		else:
 			self.post_message(text="Sorry, I don't understand that command. :/", channel=channel)
+	
 	def handle_mention(self, text, channel):
 		tokens = text.split(" ")
 		if tokens[0] != "<@" + self.BOT_ID + ">":
@@ -99,8 +105,10 @@ class GifBot:
 			self.post_gif(channel, tokens[2])
 		else:
 			self.post_message(text="Sorry, I don't understand that. :/\nHINT: try `@" + self.NAME + " help`", channel=channel)
+	
 	def gif_trigger(self, text):
 		return "help" in text.lower()
+	
 	def post_gif(self, channel, type="all"):
 		if type != "all" and not type in self.store.get_tags():
 			self.post_message("An error occurred. :(", channel=channel)

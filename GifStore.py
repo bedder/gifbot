@@ -16,6 +16,7 @@ class GifStore:
 				if len(line_data) >= 2:
 					self.add_gif(line_data[0], line_data[1:])
 	
+	
 	def add_gif(self, url, tags):
 		self.elements.append(self.Element(url, tags))
 		for t in tags:
