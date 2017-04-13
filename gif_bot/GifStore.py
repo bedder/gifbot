@@ -44,18 +44,18 @@ class GifStore:
 		return [t for t in self.tags]
 
 	def get_info(self, max):
-		text = ""
+		text = "We have " + str(len(self.elements)) + " gifs, including..."
 		if max==0 or len(self.tags) < max:
 			for t in self.tags:
 				count = self.tags[t]
-				text += "\nWe have " + str(count) + \
+				text += "\n  " + str(count) + \
 				        " " + random.choice(self.modifiers) + \
 				        " " + t + \
 				        " gif" + ("s" if count > 1 else "") + "!"
 		else:
 			for t in random.sample(list(self.tags), max):
 				count = self.tags[t]
-				text += "\nWe have " + str(count) + \
+				text += "\n  " + str(count) + \
 				        " " + random.choice(self.modifiers) + \
 				        " " + t + \
 				        " gif" + ("s" if count > 1 else "") + "!"

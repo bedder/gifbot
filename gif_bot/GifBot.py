@@ -144,8 +144,7 @@ class GifBot:
 	
 	def post_gif(self, channel, type="all"):
 		if type != "all" and not type in self.store.get_tags():
-			self.post_message("An error occurred. :(", channel=channel)
-			self.post_message("[UNKNOWN GIF TYPE : \"" + type + "\"]", channel=channel)
+			self.post_message("Sorry, I have no " + type + " gifs... :(", channel=channel)
 			return
 		for i in range(10):
 			print("[STATUS] Retrieving gif of type " + type)
