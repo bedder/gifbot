@@ -63,7 +63,7 @@ class GifBot:
 	def handle(self, rtm_messages):
 		if rtm_messages and len(rtm_messages) > 0:
 			for message in rtm_messages:
-				self.log("input", "Received " + message["type"])
+				# self.log("input", "Received " + message["type"])
 				if message["type"] == "message":
 					self.handle_message(message)
 	
