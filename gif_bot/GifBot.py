@@ -27,43 +27,57 @@ class GifBot:
 					self.OWNER_ID = user["id"]
 					set_owner_id = True
 			if not set_bot_id:
-				raise Exception("Unable to find user \"" + self.NAME + "\" in the Slack channel")
+				print("[ERROR]  Unable to find user \"" + self.NAME + "\" in the Slack channel")
+				raise Exception()
 			if not set_owner_id:
-				raise Exception("Unable to find user \"" + self.OWNER + "\" in the Slack channel")
+				print("[ERROR]  Unable to find user \"" + self.OWNER + "\" in the Slack channel")
+				raise Exception()
 		else:
-			raise Exception("Error in Slack API call users.list")
+			print("[ERROR]  Error in API call to users.list")
+			raise Exception()
 	
 	def run(self):
-		DELAY = 1
-		if self.client.rtm_connect():
-			print("Bot \"" + self.NAME + "\" is running")
-			while True:
-				rtm_messages = self.client.rtm_read()
-				self.handle(rtm_messages)
-				time.sleep(DELAY)
-	
+		STD_DELAY = 0.5
+		ERR_DELAY = 5
+		MAX_DELAY = 3600
+		while True:
+			try:
+				if self.client.rtm_connect():
+					print("[STATUS] Bot connected")
+					while True:
+							rtm_messages = self.client.rtm_read()
+							self.handle(rtm_messages)
+							time.sleep(STD_DELAY)
+				else:
+					print("[ERROR]  Bot is unable to connect to the Slack service")
+			except:
+				print("[ERROR]  Unknown exception encountered.")
+			if (ERR_DELAY < MAX_DELAY):
+				print("[STATUS] Trying again in " + str(ERR_DELAY) + " seconds...")
+				time.sleep(ERR_DELAY)
+				ERR_DELAY *= 2
+			else:
+				print("[STATUS] Maximum number of exceptions caught. Exiting...")
+				return
+		
 	def handle(self, rtm_messages):
 		if rtm_messages and len(rtm_messages) > 0:
 			for message in rtm_messages:
-				print("[received " + message["type"] + "]")
+				print("[INPUT]  Received " + message["type"])
 				if message["type"] == "message":
 					self.handle_message(message)
 	
 	def handle_message(self, message):
 		if "user" not in message:
-			print("Unknown message type")
+			print("[INPUT]  Unknown message type")
 			return
 		if message["user"] == self.BOT_ID:
-			print("Self message")
 			return
 		elif message["user"] == self.OWNER_ID and message["channel"][0] == "D":
-			print("Handling command")
 			self.handle_command(message["text"], message["channel"])
 		elif self.is_mention(message["text"]):
-			print("Handling mention")
 			self.handle_mention(message["text"], message["channel"])
 		elif self.gif_trigger(message["text"]):
-			print("Handling GIF request")
 			self.post_gif(message["channel"])
 	
 	def is_mention(self, text):
@@ -134,9 +148,9 @@ class GifBot:
 			self.post_message("[UNKNOWN GIF TYPE : \"" + type + "\"]", channel=channel)
 			return
 		for i in range(10):
-			print("Getting gif of type " + type)
+			print("[STATUS] Retrieving gif of type " + type)
 			url = self.store.get_gif(type)
 			if url:
 				self.post_message(text="Look after yourself, buddy! " + url, channel=channel)
 				return
-		print("Unable to find a gif of type " + type + " :(")
+		print("[ERROR]  Unable to find a gif of type " + type + " :(")
