@@ -1,6 +1,6 @@
 from configobj import ConfigObj
 from slackclient import SlackClient
-from GifStore import GifStore
+from gif_bot.GifStore import GifStore
 import time
 
 class GifBot:
