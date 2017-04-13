@@ -72,11 +72,11 @@ class GifStore:
 			return
 		return random.choice(matches).url
 	
-	def save_manifest(self, filenmame):
+	def save_manifest(self, filename):
 		file = open(filename, "w")
 		for e in self.elements:
 			line = e.url
 			for t in e.tags:
 				line += "," + t
-			file.write(line)
+			file.write(line + "\n")
 		file.close()

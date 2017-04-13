@@ -77,7 +77,7 @@ class GifBot:
 		if len(tokens)==0:
 			return
 		if tokens[0] == "add" and len(tokens) > 1:
-			self.store.add_gif(tokens[1], tokens[2:])
+			self.store.add_gif(tokens[1][1:-1], tokens[2:])
 			self.post_message(text="Adding " + tokens[1], channel=channel)
 			self.post_message(text="> " + tokens[1], channel=channel)
 			self.post_message(text="Type `save` to save this to the manifest", channel=channel)
