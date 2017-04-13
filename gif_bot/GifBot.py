@@ -2,6 +2,7 @@ from configobj import ConfigObj
 from slackclient import SlackClient
 from gif_bot.GifStore import GifStore
 import time
+import random
 
 class GifBot:
 	def __init__(self, filename):
@@ -12,6 +13,20 @@ class GifBot:
 		self.MANIFEST  = config["manifest_loc"]
 		# Initialise the store of GIFs
 		self.store = GifStore(open(self.MANIFEST).read())
+		# Initialise some strings. This should probably be read from a file rather than hard-coded...
+		self.collectivenouns = [
+			"buddy", "pal", "friend", "friend-o", "mate", "chum", 
+			"you awesome person", "you lovely person"
+		]
+		self.greetings = [
+			"Here you go, {}!", "Look after yourself, {}!", "You're fantastic, {}!",
+			"I hope you enjoy this, {}! :D", "This is just for you, {}!",
+			"One gif coming up! I selected it especially for you, {}!",
+			"It's not like I selected this just for you! B-b-baka! :anger: :heart:",
+			"I didn't find this gif for you, you know! :anger: :heart:",
+			"I hope this helps!",
+			"This is for you... I hope you like it... :blush:"
+		]
 		# Initialise the Slack client
 		self.client = SlackClient(self.API_TOKEN)
 		# Find out the bot's ID
@@ -149,7 +164,8 @@ class GifBot:
 			self.log("status", "Retrieving gif of type " + type)
 			url = self.store.get_gif(type)
 			if url:
-				self.post_message(text="Look after yourself, buddy! " + url, channel=channel)
+				text = random.choice(self.greetings).format(random.choice(self.collectivenouns)) + " " + url
+				self.post_message(text=text, channel=channel)
 				return
 		self.log("error", "Unable to find a gif of type " + type + " :(")
 
