@@ -114,6 +114,8 @@ class GifBot:
 			self.post_message(text="Removing " + tokens[1], channel=channel)
 		elif tokens[0] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
+		elif tokens[0] == "compare" and len(tokens) > 2:
+			self.compare_counts(channel, tokens[1:])
 		elif tokens[0] == "request":
 			if len(tokens) > 1:
 				self.post_gif(channel=channel, type=tokens[1])
@@ -131,6 +133,7 @@ class GifBot:
 			                       "`remove url`\n" \
 			                       "`status`\n" \
 			                       "`request cat`\n" \
+			                       "`compare cat dog alpaca`\n" \
 			                       "`reload`\n" \
 			                       "`save`", channel=channel)
 	
@@ -142,12 +145,15 @@ class GifBot:
 			text="Known commands:\n" \
 			     "`help` : Display self message\n" \
 			     "`status` : Give a status report of the bot\n" \
-			     "`request cat` : Request a cat GIF"
+			     "`request cat` : Request a cat GIF\n" \
+			     "`compare cat dog` : Compare the number of GIFs I know about"
 			self.post_message(text=text, channel=channel)
 		elif len(tokens) == 2 and tokens[1] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
 		elif len(tokens) == 3 and tokens[1] == "request":
 			self.post_gif(channel, tokens[2])
+		elif len(tokens) > 3 and tokens[1] == "compare":
+			self.compare_counts(channel, tokens[2:])
 		else:
 			self.post_message(text="Sorry, I don't understand that. :/\n" \
 			                       "HINT: try `@" + self.NAME + " help`",
@@ -168,6 +174,26 @@ class GifBot:
 				self.post_message(text=text, channel=channel)
 				return
 		self.log("error", "Unable to find a gif of type " + type + " :(")
+
+	def compare_counts(self, channel, tokens):
+		best_count = 0
+		best_tag = "neither of them!"
+		msg = "Current GIF status:\n```"
+		for t in tokens:
+			count = self.store.get_count(t)
+			msg += "  " + t + " : " + str(count) + "\n"
+			if count == 0:
+				continue
+			if count == best_count:
+				if "both " in best_tag:
+					best_tag += " and " + t
+				else:
+					best_tag = "both " + best_tag + " and " + t
+			elif count > best_count:
+				best_count = count
+				best_tag = t
+		msg += "```\nThe winner is.... " + best_tag
+		self.post_message(text=msg, channel=channel)
 
 	def log(self, type, message):
 		msg = "{} {} {}".format(time.strftime("%Y%m%d %H:%M:%S", time.gmtime()),

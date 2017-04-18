@@ -61,6 +61,10 @@ class GifStore:
 				        " gif" + ("s" if count > 1 else "") + "!"
 			text += "\n... and many more!"
 		return text
+
+	def get_count(self, tag):
+		return len([e for e in self.elements
+		               if tag in e.tags])
 	
 	def get_gif(self, tag):
 		if tag == "all":
