@@ -63,15 +63,17 @@ class GifStore:
 		return text
 
 	def get_count(self, tag):
+		subtags = tag.split("+")
 		return len([e for e in self.elements
-		               if tag in e.tags])
+		               if all(t in e.tags for t in subtags)])
 	
 	def get_gif(self, tag):
 		if tag == "all":
 			matches = self.elements
 		else:
+			subtags = tag.split("+")
 			matches = [e for e in self.elements
-			              if tag in e.tags]
+			              if all(t in e.tags for t in subtags)]
 		if len(matches) == 0:
 			return
 		return random.choice(matches).url
