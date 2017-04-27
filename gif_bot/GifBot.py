@@ -85,13 +85,13 @@ class GifBot:
 			self.post_gif(message["channel"])
 	
 	def is_mention(self, text):
-		return "@" + self.BOT_ID in text
+		return "@" + self.BOT_ID in text.split(" ")[0]
 	
 	def post_message(self, text, channel):
 		self.client.api_call("chat.postMessage", channel=channel, text=text, as_user=True)
 	
 	def handle_command(self, text, channel):
-		tokens = text.split(" ")
+		tokens = re.split(r"\s+", text.lower())
 		if len(tokens)==0:
 			return
 		if tokens[0] == "add" and len(tokens) > 1:
@@ -128,10 +128,8 @@ class GifBot:
 			                       "`save`", channel=channel)
 	
 	def handle_mention(self, text, channel):
-		tokens = text.split(" ")
-		if tokens[0] != "<@" + self.BOT_ID + ">":
-			return
-		elif len(tokens) == 2 and tokens[1] == "help":
+		tokens = re.split(r"\s+", text.lower())
+		if len(tokens) == 2 and tokens[1] == "help":
 			text="Known commands:\n" \
 			     "`help` : Display self message\n" \
 			     "`status` : Give a status report of the bot\n" \
@@ -150,7 +148,7 @@ class GifBot:
 			                  channel=channel)
 	
 	def gif_trigger(self, text):
-		return "help" in text.lower()
+		return "help" in text.lower() or "halp" in text.lower()
 	
 	def post_gif(self, channel, type="all"):
 		if type != "all" and not type in self.store.get_tags():
