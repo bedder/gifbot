@@ -104,7 +104,7 @@ class GifBot:
 			self.post_message(text="Removing " + tokens[1], channel=channel)
 		elif tokens[0] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
-		elif tokens[0] == "compare" and len(tokens) > 2:
+		elif tokens[0] == "compare" and len(tokens) >= 2:
 			self.compare_counts(channel, tokens[1:])
 		elif tokens[0] == "request":
 			if len(tokens) > 1:
@@ -113,19 +113,20 @@ class GifBot:
 				self.post_gif(channel=channel)
 		elif tokens[0] == "reload":
 			self.store.__init__(open(self.MANIFEST).read())
+			self.post_message(text="Done!", channel=channel)
 		elif tokens[0] == "save":
 			self.store.save_manifest(self.MANIFEST)
 			self.post_message(text="Manifest saved", channel=channel)
 		else:
-			self.post_message(text="Sorry, I don't understand that command. :/", channel=channel)
-			self.post_message(text="Supported commands:\n" \
-			                       "`add url token1 token2...`\n" \
-			                       "`remove url`\n" \
-			                       "`status`\n" \
-			                       "`request cat`\n" \
-			                       "`compare cat dog alpaca`\n" \
-			                       "`reload`\n" \
-			                       "`save`", channel=channel)
+			self.post_message(text="Sorry, I don't understand that command.\n" \
+			                       "Supported commands:\n" \
+			                       "  `add url token1 token2...`\n" \
+			                       "  `remove url`\n" \
+			                       "  `status`\n" \
+			                       "  `request cat`\n" \
+			                       "  `compare cat dog alpaca`\n" \
+			                       "  `reload`\n" \
+			                       "  `save`", channel=channel)
 	
 	def handle_mention(self, text, channel):
 		tokens = re.split(r"\s+", text.lower())
@@ -138,22 +139,21 @@ class GifBot:
 			self.post_message(text=text, channel=channel)
 		elif len(tokens) == 2 and tokens[1] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
+		elif len(tokens) == 2 and tokens[1] == "request":
+			self.post_gif(channel)
 		elif len(tokens) == 3 and tokens[1] == "request":
 			self.post_gif(channel, tokens[2])
-		elif len(tokens) > 3 and tokens[1] == "compare":
+		elif len(tokens) >= 3 and tokens[1] == "compare":
 			self.compare_counts(channel, tokens[2:])
 		else:
-			self.post_message(text="Sorry, I don't understand that. :/\n" \
-			                       "HINT: try `@" + self.NAME + " help`",
+			self.post_message(text="Sorry, I don't understand that!\n" \
+			                       "(HINT: try `@" + self.NAME + " help` to see a list of suitable commands)",
 			                  channel=channel)
 	
 	def gif_trigger(self, text):
 		return "help" in text.lower() or "halp" in text.lower()
 	
 	def post_gif(self, channel, type="all"):
-		if type != "all" and not type in self.store.get_tags():
-			self.post_message("Sorry, I have no " + type + " gifs... :(", channel=channel)
-			return
 		for i in range(10):
 			self.log("status", "Retrieving gif of type " + type)
 			url = self.store.get_gif(type)
@@ -166,7 +166,7 @@ class GifBot:
 	def compare_counts(self, channel, tokens):
 		best_count = 0
 		best_tag = "neither of them!"
-		msg = "Current GIF status:\n```"
+		msg = "Current GIF counts:\n```"
 		for t in tokens:
 			count = self.store.get_count(t)
 			msg += "  " + t + " : " + str(count) + "\n"
@@ -180,7 +180,7 @@ class GifBot:
 			elif count > best_count:
 				best_count = count
 				best_tag = t
-		msg += "```\nThe winner is.... " + best_tag
+		msg += "```\nThe winner is.... " + best_tag + "!"
 		self.post_message(text=msg, channel=channel)
 
 	def log(self, type, message):
