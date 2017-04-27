@@ -39,6 +39,7 @@ class GifBot:
 		else:
 			self.log("error", "Error in API call to users.list")
 			raise Exception()
+		self.log("status", "Bot initialised with [ID:{}] and [ownerID:{}]".format(self.BOT_ID, self.OWNER_ID))
 	
 	def run(self):
 		STD_DELAY = 0.5
@@ -47,7 +48,7 @@ class GifBot:
 		while True:
 			try:
 				if self.client.rtm_connect():
-					self.log("status", "Bot connected")
+					self.log("staus", "Bot connected to Slack RTM API")
 					while True:
 						rtm_messages = self.client.rtm_read()
 						self.handle(rtm_messages)
