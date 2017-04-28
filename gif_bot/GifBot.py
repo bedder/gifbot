@@ -75,7 +75,7 @@ class GifBot:
 			else:
 				self.log("error", "Maximum number of exceptions caught. Exiting...")
 				return
-		
+	
 	############################################################################
 	# Message type handlers
 	############################################################################
@@ -138,11 +138,16 @@ class GifBot:
 		if len(tokens) < 2:
 			return
 		if tokens[1] == "help":
-			text="Known commands:\n" \
-			     "`help` : Display self message\n" \
-			     "`status` : Give a status report of the bot\n" \
-			     "`request cat` : Request a cat GIF\n" \
-			     "`compare cat dog` : Compare the number of GIFs I know about"
+			text="Hi! I know the following commands:\n" \
+			     "  `help` : Display self message\n" \
+			     "  `about` : Display info about me\n" \
+			     "  `status` : Give a status report of the bot\n" \
+			     "  `request cat` : Request a cat GIF\n" \
+			     "  `compare cat dog` : Compare the number of GIFs I know about"
+			self.post_message(text=text, channel=channel)
+		elif tokens[1] == "about":
+			text = "I'm a wholesome bot created by *Matthew Bedder*. You can " \
+			       "read my source-code at `https://github.com/bedder/gifbot`."
 			self.post_message(text=text, channel=channel)
 		elif tokens[1] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
