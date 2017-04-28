@@ -91,14 +91,12 @@ class GifBot:
 		self.client.api_call("chat.postMessage", channel=channel, text=text, as_user=True)
 	
 	def handle_command(self, text, channel):
-		tokens = re.split(r"\s+", text.lower())
+		tokens = re.split(r"\s+", text)
 		if len(tokens)==0:
 			return
 		if tokens[0] == "add" and len(tokens) > 1:
 			self.store.add_gif(tokens[1][1:-1], tokens[2:])
-			self.post_message(text="Adding " + tokens[1], channel=channel)
-			self.post_message(text="> " + tokens[1], channel=channel)
-			self.post_message(text="Type `save` to save this to the manifest", channel=channel)
+			self.post_message(text="Adding {}\nType `save` to save this to the manifest.".format(tokens[1]), channel=channel)
 		elif tokens[0] == "remove" and len(tokens) == 2:
 			self.store.remove_gif(tokens[1])
 			self.post_message(text="Removing " + tokens[1], channel=channel)
