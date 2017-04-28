@@ -156,13 +156,12 @@ class GifBot:
 		response = self.client.api_call("reactions.add", name=emoji, channel=channel, timestamp=ts)
 
 	def post_gif(self, channel, type="all"):
-		for i in range(10):
-			self.log("status", "Retrieving gif of type " + type)
-			url = self.store.get_gif(type)
-			if url:
-				text = random.choice(self.greetings).format(random.choice(self.nouns)) + " " + url
-				self.post_message(text=text, channel=channel)
-				return
+		self.log("status", "Retrieving gif of type " + type)
+		url = self.store.get_gif(type)
+		if url:
+			text = random.choice(self.greetings).format(random.choice(self.nouns)) + " " + url
+			self.post_message(text=text, channel=channel)
+			return
 		self.post_message("Sorry, I have no gifs of type `" + type + "` :weary:", channel=channel)
 
 	def compare_counts(self, channel, tokens):
