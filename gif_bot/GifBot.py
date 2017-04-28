@@ -22,7 +22,6 @@ class GifBot:
 		self.greetings  = asList(config["greetings"])
 		self.triggers   = asList(config["triggers"])
 		self.reactions  = asList(config["reactions"])
-		print(self.reactions)
 		# Initialise the store of GIFs
 		self.store = GifStore(open(self.MANIFEST).read())
 		# Initialise the Slack client
@@ -50,6 +49,9 @@ class GifBot:
 			raise Exception()
 		self.log("status", "Bot initialised with [ID:{}] and [ownerID:{}]".format(self.BOT_ID, self.OWNER_ID))
 
+	############################################################################
+	# Standard entry point
+	############################################################################
 	def run(self):
 		STD_DELAY = 0.5
 		ERR_DELAY = 5
@@ -74,10 +76,12 @@ class GifBot:
 				self.log("error", "Maximum number of exceptions caught. Exiting...")
 				return
 		
+	############################################################################
+	# Message type handlers
+	############################################################################
 	def handle(self, rtm_messages):
 		if rtm_messages and len(rtm_messages) > 0:
 			for message in rtm_messages:
-				# self.log("input", "Received " + message["type"])
 				if message["type"] == "message":
 					self.handle_message(message)
 	
@@ -87,20 +91,13 @@ class GifBot:
 		if message["user"] == self.BOT_ID:
 			return
 		elif message["user"] == self.OWNER_ID and message["channel"][0] == "D":
-			self.handle_command(message["text"], message["channel"])
+			self.handle_command(message["text"], message["channel"], message["ts"])
 		elif self.is_mention(message["text"]):
-			self.handle_mention(message["text"], message["channel"])
-		elif self.gif_trigger(message["text"]):
-			self.post_reaction(message["channel"], message["ts"], random.choice(self.reactions))
-			self.post_gif(message["channel"])
+			self.handle_mention(message["text"], message["channel"], message["ts"])
+		elif self.is_trigger(message["text"]):
+			self.handle_trigger(message["channel"], message["ts"])
 	
-	def is_mention(self, text):
-		return "@" + self.BOT_ID in text.split(" ")[0]
-	
-	def post_message(self, text, channel):
-		self.client.api_call("chat.postMessage", channel=channel, text=text, as_user=True)
-	
-	def handle_command(self, text, channel):
+	def handle_command(self, text, channel, ts):
 		tokens = re.split(r"\s+", text)
 		if len(tokens)==0:
 			return
@@ -113,15 +110,15 @@ class GifBot:
 		elif tokens[0] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
 		elif tokens[0] == "compare" and len(tokens) >= 2:
-			self.compare_counts(channel, tokens[1:])
+			self.handle_compare(channel, tokens[1:])
 		elif tokens[0] == "request":
-			if len(tokens) > 1:
-				self.post_gif(channel=channel, type=tokens[1])
+			if len(tokens) == 1:
+				self.handle_trigger(channel=channel, ts=ts)
 			else:
-				self.post_gif(channel=channel)
+				self.handle_trigger(channel=channel, ts=ts, type=tokens[1])
 		elif tokens[0] == "reload":
 			self.store.__init__(open(self.MANIFEST).read())
-			self.post_message(text="Done!", channel=channel)
+			self.post_message(text="Manifest reloaded", channel=channel)
 		elif tokens[0] == "save":
 			self.store.save_manifest(self.MANIFEST)
 			self.post_message(text="Manifest saved", channel=channel)
@@ -136,48 +133,36 @@ class GifBot:
 			                       "  `reload`\n" \
 			                       "  `save`", channel=channel)
 	
-	def handle_mention(self, text, channel):
+	def handle_mention(self, text, channel, ts):
 		tokens = re.split(r"\s+", text.lower())
-		if len(tokens) == 2 and tokens[1] == "help":
+		if len(tokens) < 2:
+			return
+		if tokens[1] == "help":
 			text="Known commands:\n" \
 			     "`help` : Display self message\n" \
 			     "`status` : Give a status report of the bot\n" \
 			     "`request cat` : Request a cat GIF\n" \
 			     "`compare cat dog` : Compare the number of GIFs I know about"
 			self.post_message(text=text, channel=channel)
-		elif len(tokens) == 2 and tokens[1] == "status":
+		elif tokens[1] == "status":
 			self.post_message(text=self.store.get_info(max=10), channel=channel)
-		elif len(tokens) == 2 and tokens[1] == "request":
-			self.post_gif(channel)
-		elif len(tokens) == 3 and tokens[1] == "request":
-			self.post_gif(channel, tokens[2])
-		elif len(tokens) >= 3 and tokens[1] == "compare":
-			self.compare_counts(channel, tokens[2:])
+		elif tokens[1] == "request":
+			if len(tokens) == 2:
+				self.handle_trigger(channel=channel, ts=ts)
+			else:
+				self.handle_trigger(channel=channel, ts=ts, type=tokens[2])
+		elif tokens[1] == "compare" and len(tokens)>2:
+			self.handle_compare(channel, tokens[2:])
 		else:
 			self.post_message(text="Sorry, I don't understand that!\n" \
 			                       "(HINT: try `@" + self.NAME + " help` to see a list of suitable commands)",
 			                  channel=channel)
 	
-	def gif_trigger(self, text):
-		for t in self.triggers:
-			if t.lower() in text.lower():
-				return True
-		return False
-	
-	def post_reaction(self, channel, ts, emoji):
-		self.log("status", "Adding reaction [{}] to message [ts:{}]".format(emoji, ts))
-		response = self.client.api_call("reactions.add", name=emoji, channel=channel, timestamp=ts)
+	def handle_trigger(self, channel, ts, type="all"):
+			self.post_reaction(channel, ts, random.choice(self.reactions))
+			self.post_gif(channel, type)
 
-	def post_gif(self, channel, type="all"):
-		self.log("status", "Retrieving gif of type " + type)
-		url = self.store.get_gif(type)
-		if url:
-			text = random.choice(self.greetings).format(random.choice(self.nouns)) + " " + url
-			self.post_message(text=text, channel=channel)
-			return
-		self.post_message("Sorry, I have no gifs of type `" + type + "` :weary:", channel=channel)
-
-	def compare_counts(self, channel, tokens):
+	def handle_compare(self, channel, tokens):
 		best_count = 0
 		best_tag = "neither of them!"
 		msg = "Current GIF counts:\n```"
@@ -186,7 +171,7 @@ class GifBot:
 			msg += "  " + t + " : " + str(count) + "\n"
 			if count == 0:
 				continue
-			if count == best_count:
+			elif count == best_count:
 				if "both " in best_tag:
 					best_tag += " and " + t
 				else:
@@ -197,6 +182,40 @@ class GifBot:
 		msg += "```\nThe winner is.... " + best_tag + "!"
 		self.post_message(text=msg, channel=channel)
 
+	############################################################################
+	# Message type tests
+	############################################################################
+	def is_mention(self, text):
+		return "@" + self.BOT_ID in text.split(" ")[0]
+	
+	def is_trigger(self, text):
+		for t in self.triggers:
+			if t.lower() in text.lower():
+				return True
+		return False
+
+	############################################################################
+	# Slack API wrapper functions
+	############################################################################
+	def post_message(self, text, channel):
+		self.client.api_call("chat.postMessage", channel=channel, text=text, as_user=True)
+
+	def post_gif(self, channel, type="all"):
+		self.log("status", "Retrieving gif of type " + type)
+		url = self.store.get_gif(type)
+		if url:
+			text = random.choice(self.greetings).format(random.choice(self.nouns)) + " " + url
+			self.post_message(text=text, channel=channel)
+			return
+		self.post_message("Sorry, I have no gifs of type `" + type + "` :weary:", channel=channel)
+
+	def post_reaction(self, channel, ts, emoji):
+		self.log("status", "Adding reaction [{}] to message [ts:{}]".format(emoji, ts))
+		response = self.client.api_call("reactions.add", name=emoji, channel=channel, timestamp=ts)
+
+	############################################################################
+	# Helper functions
+	############################################################################
 	def log(self, type, message):
 		msg = "{} {} {}".format(time.strftime("%Y%m%d %H:%M:%S", time.gmtime()),
 		                        ("[" + type.upper() + "]").ljust(8),
