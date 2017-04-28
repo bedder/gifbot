@@ -14,7 +14,7 @@ It's just a Python project, so should be fairly easy to run. I recommended that 
     
 3) Generate the Python virtual environment, and install the dependencies listed in `requirements.txt`
 
-This can be done using the `setup.bat` script, or manually.
+   This can be done using the `setup.bat` script, or manually.
 
 		> virtualenv venv
 		> venv\Scripts\activate
