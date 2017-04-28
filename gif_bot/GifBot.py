@@ -82,6 +82,7 @@ class GifBot:
 		elif self.is_mention(message["text"]):
 			self.handle_mention(message["text"], message["channel"])
 		elif self.gif_trigger(message["text"]):
+			self.post_reaction(message["channel"], message["ts"], "heart")
 			self.post_gif(message["channel"])
 	
 	def is_mention(self, text):
@@ -151,6 +152,9 @@ class GifBot:
 	def gif_trigger(self, text):
 		return "help" in text.lower() or "halp" in text.lower()
 	
+	def post_reaction(self, channel, ts, emoji):
+		response = self.client.api_call("reactions.add", name=emoji, channel=channel, timestamp=ts)
+
 	def post_gif(self, channel, type="all"):
 		for i in range(10):
 			self.log("status", "Retrieving gif of type " + type)
