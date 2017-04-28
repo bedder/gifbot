@@ -5,6 +5,11 @@ import time
 import random
 import re
 
+def asList(item):
+	if isinstance(item, list):
+		return item
+	return [item]
+
 class GifBot:
 	def __init__(self, filename):
 		config          = ConfigObj(filename)
@@ -12,8 +17,12 @@ class GifBot:
 		self.OWNER      = config["bot_owner"]
 		self.API_TOKEN  = config["api_token"]
 		self.MANIFEST   = config["manifest_loc"]
-		self.nouns      = config["nouns"]
-		self.greetings  = config["greetings"]
+		# Save messaging parameters, and put into lists if required.
+		self.nouns      = asList(config["nouns"])
+		self.greetings  = asList(config["greetings"])
+		self.triggers   = asList(config["triggers"])
+		self.reactions  = asList(config["reactions"])
+		print(self.reactions)
 		# Initialise the store of GIFs
 		self.store = GifStore(open(self.MANIFEST).read())
 		# Initialise the Slack client
@@ -40,7 +49,7 @@ class GifBot:
 			self.log("error", "Error in API call to users.list")
 			raise Exception()
 		self.log("status", "Bot initialised with [ID:{}] and [ownerID:{}]".format(self.BOT_ID, self.OWNER_ID))
-	
+
 	def run(self):
 		STD_DELAY = 0.5
 		ERR_DELAY = 5
@@ -82,7 +91,7 @@ class GifBot:
 		elif self.is_mention(message["text"]):
 			self.handle_mention(message["text"], message["channel"])
 		elif self.gif_trigger(message["text"]):
-			self.post_reaction(message["channel"], message["ts"], "heart")
+			self.post_reaction(message["channel"], message["ts"], random.choice(self.reactions))
 			self.post_gif(message["channel"])
 	
 	def is_mention(self, text):
@@ -150,9 +159,13 @@ class GifBot:
 			                  channel=channel)
 	
 	def gif_trigger(self, text):
-		return "help" in text.lower() or "halp" in text.lower()
+		for t in self.triggers:
+			if t.lower() in text.lower():
+				return True
+		return False
 	
 	def post_reaction(self, channel, ts, emoji):
+		self.log("status", "Adding reaction [{}] to message [ts:{}]".format(emoji, ts))
 		response = self.client.api_call("reactions.add", name=emoji, channel=channel, timestamp=ts)
 
 	def post_gif(self, channel, type="all"):
