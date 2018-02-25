@@ -1,2 +1,2 @@
-configobj
-slackclient
+configobj==5.0.6
+slackclient==1.0.6
